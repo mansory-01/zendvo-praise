@@ -107,11 +107,11 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 <table align="center">
   <tr>
     <td align="center">
-      <img src="https://github.com/codeze-us.png" alt="codeZe-us" width="150" />
+      <img src="https://github.com/Emrys02.png" alt="Emrys02" width="150" />
       <br /><br />
-      <strong>codeZe-us</strong>
+      <strong>Emrys02</strong>
       <br /><br />
-      <a href="https://github.com/codeze-us" target="_blank">GitHub</a>
+      <a href="https://github.com/Emrys02" target="_blank">GitHub</a>
     </td>
   </tr>
 </table>
