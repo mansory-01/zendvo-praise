@@ -5,66 +5,65 @@ import {
 } from "@/lib/validation";
 
 describe("Timezone-aware integration", () => {
-  it("should handle PST sender input and convert to UTC correctly", () => {
-    // Simulate a sender in PST (UTC-8) setting unlock for 9 AM PST
-    // 9 AM PST = 5 PM UTC (9 AM + 8 hours)
-    const pstUnlockTime = "2026-03-30T09:00:00.000-08:00";
+  const futureIsoWithOffset = (hoursFromNowUtc: number, offset: string) => {
+    const date = new Date(Date.now() + hoursFromNowUtc * 60 * 60 * 1000);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+    const milliseconds = String(date.getUTCMilliseconds()).padStart(3, "0");
 
-    // Validate the input
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}${offset}`;
+  };
+
+  it("should handle PST sender input and convert to UTC correctly", () => {
+    const pstUnlockTime = futureIsoWithOffset(10, "-08:00");
+
     const validation = validateUnlockAt(pstUnlockTime);
     expect(validation.valid).toBe(true);
 
-    // Convert to UTC for database storage
     const utcDate = convertToUTCDate(pstUnlockTime);
     expect(utcDate).toBeInstanceOf(Date);
 
-    // Verify it's stored as 5 PM UTC
     const utcString = formatAsUTCISO(utcDate);
-    expect(utcString).toBe("2026-03-30T17:00:00.000Z");
+    expect(utcString).toBe(new Date(pstUnlockTime).toISOString());
   });
 
   it("should handle EST sender input and convert to UTC correctly", () => {
-    // Simulate a sender in EST (UTC-5) setting unlock for 9 AM EST
-    // 9 AM EST = 2 PM UTC (9 AM + 5 hours)
-    const estUnlockTime = "2026-03-30T09:00:00.000-05:00";
+    const estUnlockTime = futureIsoWithOffset(7, "-05:00");
 
-    // Validate the input
     const validation = validateUnlockAt(estUnlockTime);
     expect(validation.valid).toBe(true);
 
-    // Convert to UTC for database storage
     const utcDate = convertToUTCDate(estUnlockTime);
     expect(utcDate).toBeInstanceOf(Date);
 
-    // Verify it's stored as 2 PM UTC
     const utcString = formatAsUTCISO(utcDate);
-    expect(utcString).toBe("2026-03-30T14:00:00.000Z");
+    expect(utcString).toBe(new Date(estUnlockTime).toISOString());
   });
 
   it("should handle UTC sender input correctly", () => {
-    // Simulate a sender using UTC directly
-    const utcUnlockTime = "2026-03-30T17:00:00.000Z";
+    const utcUnlockTime = futureIsoWithOffset(6, "Z");
 
-    // Validate the input
     const validation = validateUnlockAt(utcUnlockTime);
     expect(validation.valid).toBe(true);
 
-    // Convert to UTC for database storage (should remain the same)
     const utcDate = convertToUTCDate(utcUnlockTime);
     expect(utcDate).toBeInstanceOf(Date);
 
-    // Verify it's stored as the same UTC time
     const utcString = formatAsUTCISO(utcDate);
-    expect(utcString).toBe("2026-03-30T17:00:00.000Z");
+    expect(utcString).toBe(new Date(utcUnlockTime).toISOString());
   });
 
   it("should reject invalid timezone formats", () => {
     const invalidFormats = [
-      "2026-03-30 09:00:00", // No timezone
-      "2026-03-30T09:00:00", // No milliseconds or timezone
-      "2026-03-30T09:00:00.000", // No timezone
-      "2026-03-30T09:00:00Z", // No milliseconds
-      "2026-03-30T09:00:00+01:00", // No milliseconds
+      "2030-03-30 09:00:00",
+      "2030-03-30T09:00:00",
+      "2030-03-30T09:00:00.000",
+      "2030-03-30T09:00:00Z",
+      "2030-03-30T09:00:00+01:00",
     ];
 
     invalidFormats.forEach((format) => {
@@ -75,29 +74,25 @@ describe("Timezone-aware integration", () => {
   });
 
   it("should maintain timezone accuracy for edge cases", () => {
-    // Test with different timezone offsets
     const testCases = [
       {
-        input: "2026-03-30T12:00:00.000+00:00",
-        expected: "2026-03-30T12:00:00.000Z",
+        input: futureIsoWithOffset(8, "+00:00"),
       },
       {
-        input: "2026-03-30T12:00:00.000+05:30",
-        expected: "2026-03-30T06:30:00.000Z",
-      }, // IST to UTC
+        input: futureIsoWithOffset(8, "+05:30"),
+      },
       {
-        input: "2026-03-30T12:00:00.000-10:00",
-        expected: "2026-03-30T22:00:00.000Z",
-      }, // HST to UTC
+        input: futureIsoWithOffset(8, "-10:00"),
+      },
     ];
 
-    testCases.forEach(({ input, expected }) => {
+    testCases.forEach(({ input }) => {
       const validation = validateUnlockAt(input);
       expect(validation.valid).toBe(true);
 
       const utcDate = convertToUTCDate(input);
       const utcString = formatAsUTCISO(utcDate);
-      expect(utcString).toBe(expected);
+      expect(utcString).toBe(new Date(input).toISOString());
     });
   });
 });

@@ -10,7 +10,7 @@ import {
   sanitizeInput,
   convertToUTCDate,
 } from "@/lib/validation";
-import { supportedCurrencyCodes } from "@/lib/db/schema";
+import { supportedCurrencyCodes } from "@/lib/currency";
 import { isRateLimited } from "@/lib/rate-limiter";
 import { validateHoneypot } from "@/lib/honeypot";
 import { generateUniqueSlug } from "@/lib/slug";

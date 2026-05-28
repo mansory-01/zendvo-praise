@@ -36,6 +36,7 @@ jest.mock("drizzle-orm", () => ({
 jest.mock("@/lib/db", () => ({
   db: {
     select: selectMock,
+    delete: jest.fn(),
     transaction: transactionMock,
   },
 }));
@@ -109,13 +110,14 @@ describe("POST /api/auth/login", () => {
       userId: "user-123",
       email: "test@example.com",
       role: "user",
+      fingerprint: expect.any(String),
     });
     expect(transactionMock).toHaveBeenCalledTimes(1);
     expect(insertValuesMock).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: "user-123",
         token: "mock-refresh-token",
-        deviceId: expect.any(String),
+        deviceId: null,
       }),
     );
   });

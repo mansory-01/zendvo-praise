@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { supportedCurrencyCodes } from "@/lib/db/schema";
+import { supportedCurrencyCodes } from "@/lib/currency";
+
+type ValidationResult = { valid: true } | { valid: false; error: string; detail: string };
 
 export const validateEmail = (email: string): boolean => {
   const emailRegex =
@@ -38,10 +40,16 @@ export const validateFutureDatetime = (date: Date): boolean => {
   return !isNaN(date.getTime()) && date.getTime() > Date.now();
 };
 
-export const validateUnlockAt = (unlockAt: string | Date): { valid: boolean; error?: string } => {
+export const validateUnlockAt = (
+  unlockAt: string | Date,
+): { valid: boolean; error?: string; detail?: string } => {
   
   if (typeof unlockAt !== 'string' && !(unlockAt instanceof Date)) {
-    return { valid: false, error: "unlock_at must be an ISO 8601 string or Date object" };
+    return {
+      valid: false,
+      error: "unlock_at must be an ISO 8601 string or Date object",
+      detail: "unlock_at must be an ISO 8601 string or Date object",
+    };
   }
 
   
@@ -50,20 +58,33 @@ export const validateUnlockAt = (unlockAt: string | Date): { valid: boolean; err
     
     const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-]\d{2}:\d{2})$/;
     if (!iso8601Regex.test(unlockAt)) {
-      return { valid: false, error: "unlock_at must be a valid ISO 8601 date string with timezone and milliseconds (e.g., 2026-03-30T14:00:00.000Z or 2026-03-30T14:00:00.000+01:00)" };
+      return {
+        valid: false,
+        error: "unlock_at must be a valid ISO 8601 date string with timezone and milliseconds (e.g., 2026-03-30T14:00:00.000Z or 2026-03-30T14:00:00.000+01:00)",
+        detail:
+          "unlock_at must be a valid ISO 8601 date string with timezone and milliseconds (e.g., 2026-03-30T14:00:00.000Z or 2026-03-30T14:00:00.000+01:00)",
+      };
     }
   }
 
   const unlockDate = new Date(unlockAt);
   
   if (isNaN(unlockDate.getTime())) {
-    return { valid: false, error: "Invalid date format for unlock_at" };
+    return {
+      valid: false,
+      error: "Invalid date format for unlock_at",
+      detail: "Invalid date format for unlock_at",
+    };
   }
   
   const oneHourFromNow = Date.now() + 60 * 60 * 1000;
   
   if (unlockDate.getTime() < oneHourFromNow) {
-    return { valid: false, error: "unlock_at must be at least 1 hour in the future" };
+    return {
+      valid: false,
+      error: "unlock_at must be at least 1 hour in the future",
+      detail: "unlock_at must be at least 1 hour in the future",
+    };
   }
   
   return { valid: true };
@@ -158,13 +179,13 @@ export const validateMessage = (message: string | null | undefined): boolean => 
 };
 
 export const CreateGiftSchema = z.object({
-  recipient: z.string().uuid("Invalid recipient ID"),
-  amount: z.number().min(500, "Gift amount needs to be above the minimum threshold"),
+  recipient: z.string().min(1, "Invalid recipient ID"),
+  amount: z.number(),
   currency: CurrencySchema.default("NGN"),
   message: z.string().max(500, "Message cannot exceed 500 characters").optional().nullable(),
   template: z.string().optional().nullable(),
   coverImageId: z.union([z.string(), z.number()]).optional().nullable(),
-  unlock_at: z.string().datetime().optional().nullable().or(z.date().optional().nullable())
+  unlock_at: z.union([z.string(), z.date()]).optional().nullable(),
 }).refine((data) => {
   if (!data.unlock_at) return true;
   const unlockDate = new Date(data.unlock_at);

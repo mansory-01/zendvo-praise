@@ -24,6 +24,14 @@ jest.mock("@/lib/honeypot", () => ({
   validateHoneypot: jest.fn(() => true),
 }));
 
+jest.mock("@/lib/slug", () => ({
+  generateUniqueSlug: jest.fn(() => Promise.resolve("public-slug")),
+}));
+
+jest.mock("@/lib/shortCode", () => ({
+  generateUniqueShortCode: jest.fn(() => Promise.resolve("shortcode1")),
+}));
+
 describe("POST /api/gifts/public", () => {
   beforeEach(() => {
     jest.clearAllMocks();

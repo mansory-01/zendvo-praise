@@ -12,10 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-
-export const supportedCurrencyCodes = ["NGN", "USD"] as const;
-export type SupportedCurrencyCode = (typeof supportedCurrencyCodes)[number];
-
+import { supportedCurrencyCodes } from "@/lib/currency";
 
 export const userStatusEnum = pgEnum("user_status", [
   "unverified",

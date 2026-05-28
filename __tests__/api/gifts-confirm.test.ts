@@ -66,6 +66,7 @@ jest.mock("@/lib/stripe/client", () => ({
 
 const mockGift = {
   id: "gift-123",
+  slug: "mock-slug-1234",
   senderId: "sender-123",
   recipientId: "recipient-456",
   amount: 100,
@@ -105,6 +106,10 @@ function makeRequest(giftId: string) {
 describe("POST /api/gifts/public/:giftId/confirm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { processGiftTransaction } = jest.requireMock(
+      "@/server/services/transactionService",
+    );
+    processGiftTransaction.mockResolvedValue("txn_mock-uuid-1234");
   });
 
   it("should return 200 with status completed and shareLink on success", async () => {
@@ -119,7 +124,7 @@ describe("POST /api/gifts/public/:giftId/confirm", () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.status).toBe("completed");
-    expect(data.shareLink).toBe("/gift/mock-share-token-1234");
+    expect(data.shareLink).toBe("/g/mock-slug-1234");
     expect(data.transactionId).toBe("txn_mock-uuid-1234");
   });
 

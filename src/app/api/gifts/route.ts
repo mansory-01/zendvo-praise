@@ -37,6 +37,24 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    if (body.recipient === undefined || body.amount === undefined) {
+      return createProblemDetails(
+        "about:blank",
+        "Bad Request",
+        400,
+        "Recipient and amount are required",
+      );
+    }
+
+    if (typeof body.amount !== "number" || body.amount <= 0) {
+      return createProblemDetails(
+        "about:blank",
+        "Unprocessable Entity",
+        422,
+        "Gift amount needs to be above the minimum threshold",
+      );
+    }
+
     
     const validationResult = CreateGiftSchema.safeParse(body);
 
